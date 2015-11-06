@@ -8,18 +8,19 @@ logging.basicConfig(level=logging.DEBUG)
 logger = logging.getLogger("slack-client")
 
 class SlackClient(object):
-    def __init__(self, token, autoconnect=True):
+    def __init__(self, token, autoconnect=True, on_message=None, on_error=None, on_connect=None, on_close=None):
         self.token = token
         self.websocket_url = None
-        self.websocket = {}
+        self.websocket = None
         self.channels = {}
+        self.direct_channels = {}
         self.team_members = {}
 
         self.connection_retries = 0
         if autoconnect:
-            self.connect()
+            self.connect(on_message, on_error, on_connect, on_close)
 
-    def connect(self, on_message=None, on_error=None, on_connect=None, on_close=None):
+    def connect(self, on_message, on_error, on_connect, on_close):
         self.connection_retries += 1
 
         resp = requests.get("https://slack.com/api/rtm.start", params={"token": self.token})
@@ -51,7 +52,9 @@ class SlackClient(object):
             self.connect()
 
     def parse_rtm_start(self, response_json):
-        pass
+        self.team_members = {u["id"] for u in response_json["users"]}
+        self.channels = {c["id"] for c in response_json["channels"]}
+        self.direct_channels = {d["id"] for d in response_json["ims"]}
 
     @staticmethod
     def ws_on_connect(ws):
