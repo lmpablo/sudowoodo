@@ -43,18 +43,20 @@ class SlackClient(object):
                                         on_close=on_close,
                                         on_open=on_connect)
             self.websocket = ws
-            self.websocket.run_forever()
         else:
             print "Error connecting: {}".format(resp.reason)
             sleep(3)
             if self.connection_retries == 3:
                 raise Exception("Failed connecting to Slack after 3 tries.")
-            self.connect()
+            self.connect(on_message, on_error, on_connect, on_close)
+
+    def run_forever(self):
+        self.websocket.run_forever()
 
     def parse_rtm_start(self, response_json):
-        self.team_members = {u["id"] for u in response_json["users"]}
-        self.channels = {c["id"] for c in response_json["channels"]}
-        self.direct_channels = {d["id"] for d in response_json["ims"]}
+        self.team_members = {u["id"]: u for u in response_json["users"]}
+        self.channels = {c["id"]: c for c in response_json["channels"]}
+        self.direct_channels = {d["id"]: d for d in response_json["ims"]}
 
     @staticmethod
     def ws_on_connect(ws):

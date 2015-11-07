@@ -1,4 +1,4 @@
-from plugins.plugin_base import PluginBase
+from plugins.api.plugin_base import PluginBase
 
 
 class LunchPlugin(PluginBase):
