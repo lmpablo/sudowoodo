@@ -9,6 +9,7 @@ logger = logging.getLogger("slack-client")
 
 class SlackClient(object):
     def __init__(self, token, autoconnect=True, on_message=None, on_error=None, on_connect=None, on_close=None):
+        self.id = None
         self.token = token
         self.websocket_url = None
         self.websocket = None
@@ -37,6 +38,7 @@ class SlackClient(object):
         if resp.ok:
             self.connection_retries = 0
             self.parse_rtm_start(resp.json())
+            websocket.enableTrace(True)
             ws = websocket.WebSocketApp(resp.json()["url"],
                                         on_message=on_message,
                                         on_error=on_error,
@@ -54,9 +56,13 @@ class SlackClient(object):
         self.websocket.run_forever()
 
     def parse_rtm_start(self, response_json):
+        self.id = response_json["self"]["id"]
         self.team_members = {u["id"]: u for u in response_json["users"]}
         self.channels = {c["id"]: c for c in response_json["channels"]}
         self.direct_channels = {d["id"]: d for d in response_json["ims"]}
+
+    def send(self, obj):
+        self.websocket.send(json.dumps(obj))
 
     @staticmethod
     def ws_on_connect(ws):

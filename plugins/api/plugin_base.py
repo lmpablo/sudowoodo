@@ -19,4 +19,8 @@ class PluginBase(object):
 
     @abstractmethod
     def execute(self, package, callback):
-        pass
+        raise NotImplementedError
+
+    @abstractmethod
+    def can_receive(self, package):
+        raise NotImplementedError
