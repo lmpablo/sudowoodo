@@ -23,7 +23,7 @@ class Sudowoodo(object):
             plugins = yaml.safe_load(config_file)
         for plugin, settings in plugins.iteritems():
             if settings['active']:
-                module = __import__("plugins", fromlist=[plugin])
+                module = __import__("plugins.{}".format(settings.get('package', plugin)), fromlist=[plugin])
                 class_ = getattr(getattr(module, plugin), settings['class'])
                 self.plugins[plugin] = class_(self.slack.channels,
                                               self.slack.direct_channels,

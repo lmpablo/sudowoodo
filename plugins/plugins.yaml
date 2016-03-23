@@ -1,4 +1,6 @@
 lunch:
-    {class: LunchPlugin, active: true}
+  {class: LunchPlugin, active: true}
 chat:
-    {class: ChatPlugin, active: false}
+  {class: ChatPlugin, active: false}
+poll:
+  {class: PollPlugin, active: true}
