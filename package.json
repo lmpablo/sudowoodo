@@ -1,0 +1,23 @@
+{
+  "name": "sudowoodo",
+  "version": "1.0.0",
+  "description": "A slackbot",
+  "main": "sudowoodo.js",
+  "dependencies": {
+    "request": "^2.70.0"
+  },
+  "devDependencies": {},
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/lmpablo/sudowoodo.git"
+  },
+  "author": "Luis Pablo",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/lmpablo/sudowoodo/issues"
+  },
+  "homepage": "https://github.com/lmpablo/sudowoodo#readme"
+}
