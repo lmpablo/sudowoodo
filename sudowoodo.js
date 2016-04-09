@@ -1,6 +1,5 @@
 var Botkit = require('botkit');
-var request = require('request');
-var Ladder = require('./lib/ladder/index.js');
+var Ladder = require('./connectors/ladder/index.js');
 
 var controller = Botkit.slackbot({
   debug: false
@@ -21,18 +20,6 @@ function aboutBot(message) {
   return response[Math.floor(Math.random() * response.length)];
 }
 
-function GET(endpoint, callback) {
-  request('http://localhost:5000/api/v1' + endpoint, function (error, response, body) {
-    if (!error && response.statusCode == 200) {
-      var parsedJson = JSON.parse(body),
-        data = parsedJson.data,
-        reason = parsedJson.error,
-        status = parsedJson.status;
-
-      callback(status, reason, data);
-    }
-  })
-}
 
 // connect the bot to a stream of messages
 controller.spawn({
@@ -50,10 +37,9 @@ controller.hears("(?:who|what)(?: is| 's)(?: a)?", ['mention', 'direct_mention']
 });
 
 
-controller.hears('list(?:\w*) ranking(?:s)?|ranking(?:s)? list', ['direct_message'], function(bot, message) {
-
-  GET('/rankings', Ladder.processRankings(bot, message));
-})
+/* Ladder-related Triggers */
+// Get all rankings
+controller.hears(['list(?:.*) ranking(?:s)?', 'ranking(?:s)? list'], ['direct_message'], Ladder.rankings.getAll);
 
 
 controller.on('channel_join', function(bot, message) {
