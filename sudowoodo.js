@@ -59,11 +59,11 @@ controller.hears(["(what(?:'s| is) )?my ranking", "personal ranking"],
   ['ambient', 'direct_message', 'direct_mention', 'message'],
   Ladder.rankings.personal);
 
-
-controller.hears(['i won against <@(.*)>', 'i beat <@(.*)>'], ['direct_message'], function(bot, message){
-  console.log(message)
-  console.log(message.match[0])
-})
+// match record, no score
+controller.hears('(\\S+) (won against|beat|was beaten by) (\\S+)(?:.* (\\d+):(\\d+))?', ['direct_mention', 'direct_message'], Ladder.matches.add.one)
+// controller.hears(['i (?:was beaten by|lost to) (.*)', '(.*) beat me'], ['direct_mention', 'direct_message'], function(bot, message) {
+  // console.log(message)
+// })
 
 
 controller.on('user_channel_join', Ladder.players.add);

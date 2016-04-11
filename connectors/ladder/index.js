@@ -47,6 +47,56 @@ module.exports = {
   matches: {
     getAll: function(bot, message) {
       bot.reply(message, "get all matches");
+    },
+    add: {
+      one: function(bot, message) {
+        var winner, loser;
+        var verb = message.match[2] || '';
+        if (verb === 'beat' || verb === 'won against') {
+          winner = message.match[1].toUpperCase();
+          loser = message.match[3].toUpperCase();
+        } else if (verb === 'was beaten by') {
+          winner = message.match[3].toUpperCase();
+          loser = message.match[1].toUpperCase();
+        } else {
+          bot.reply("I'm not sure I understand what actually happened here.")
+          return
+        }
+
+        if (winner === "I" || winner === "ME") { winner = "<@" + message.user + ">"}
+        if (loser === "ME" || loser === "I") { loser = "<@" + message.user + ">" }
+
+        console.log(message)
+        console.log(winner)
+        console.log(loser)
+
+        if (message.match[4] && message.match[5]) {
+          score1 = parseInt(message.match[4])
+          score2 = parseInt(message.match[5])
+          winningScore = (score1 > score2) ? score1 : score2;
+          losingScore = (score1 > score2) ? score2 : score1;
+
+          bot.startConversation(message, function(err, convo){
+            var res = "Hey <@%USER%>, so:\n*Winner*: %WINNER% (%SCORE_WIN%)\n*Loser*: %LOSER% (%SCORE_LOSE%)\nCan you confirm this is correct?".replace("%USER%", message.user).replace("%WINNER%", winner).replace("%LOSER%", loser).replace("%SCORE_WIN%", winningScore).replace("%SCORE_LOSE%", losingScore)
+            convo.ask(res, [{
+              pattern: bot.utterances.yes,
+              callback: function(res, convo) {
+                convo.say('Sweet! Congrats ' + winner + "!")
+                // Insert it
+                convo.next()
+              }
+            }, {
+              pattern: bot.utterances.no,
+              callback: function(res, convo) {
+                convo.say('Oh, oops?')
+                convo.next();
+              }
+            }])
+          })
+        } else {
+          bot.reply(message, "Sorry, do you mind repeating that, but add the scores as well? Thanks.")
+        }
+      }
     }
   },
   rankings: {
