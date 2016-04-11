@@ -1,5 +1,15 @@
 var request = require('request').defaults({'baseUrl': 'http://localhost:5000/api/v1'});
 
+module.exports.parser = {
+  user: function(userString) {
+    var pattern = /<@(\w+)>/;
+    var result = userString.match(pattern);
+
+    if (result && result.length > 1) { return result[1]; }
+    else { return null; }
+  }
+}
+
 module.exports.formatter = {
   player: function(p) {
     return "<@%PLAYER_ID%>: %RATING% (%K_FACTOR%) - %LAST_GAME_PLAYED% - %NUM_GAMES_PLAYED% games"

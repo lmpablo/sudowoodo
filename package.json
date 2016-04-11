@@ -6,6 +6,7 @@
   "dependencies": {
     "botkit-storage-mongo": "^1.0.3",
     "mongodb": "^1.4.40",
+    "node-uuid": "^1.4.7",
     "request": "^2.70.0"
   },
   "devDependencies": {},
