@@ -1,5 +1,10 @@
 var Botkit = require('botkit');
 var Ladder = require('./connectors/ladder/index.js');
+var responsesjs = require('./responses.js')
+
+var Responses = responsesjs.responses
+var randomResponse = responsesjs.randomResponse
+
 mongoStorage = require('botkit-storage-mongo')({mongoUri: 'mongodb://localhost:27017/'})
 var controller = Botkit.slackbot({
   debug: false,
@@ -7,6 +12,10 @@ var controller = Botkit.slackbot({
   //include "log: false" to disable logging
   //or a "logLevel" integer from 0 to 7 to adjust logging verbosity
 });
+
+var greetingCount = 0;
+
+
 
 function processSlackPayload(payload) {
 
@@ -33,9 +42,15 @@ controller.spawn({
   processSlackPayload(payload);
 })
 
-// give the bot something to listen for.
-controller.hears('hello',['direct_message','direct_mention','mention'],function(bot,message) {
-  bot.reply(message,'Hello yourself.');
+controller.hears('^(hello|hey|yo|hi|howdy|bonjour|hallo|hullo)( sudowoodo)?$',['direct_message','direct_mention','mention'],function(bot,message) {
+  greetingCount++;
+  var responses;
+  if (greetingCount < 5) { responses = Responses.salutation.neutral; }
+  else {
+    responses = Responses.salutation.annoyed;
+    if (greetingCount > 8) { greetingCount = 0; }
+  }
+  bot.reply(message, randomResponse(responses));
 });
 
 
@@ -59,11 +74,9 @@ controller.hears(["(what(?:'s| is) )?my ranking", "personal ranking"],
   ['ambient', 'direct_message', 'direct_mention', 'message'],
   Ladder.rankings.personal);
 
-// match record, no score
+// match record
 controller.hears('(\\S+) (won against|beat|was beaten by) (\\S+)(?:.* (\\d+):(\\d+))?', ['direct_mention', 'direct_message'], Ladder.matches.add.one)
-// controller.hears(['i (?:was beaten by|lost to) (.*)', '(.*) beat me'], ['direct_mention', 'direct_message'], function(bot, message) {
-  // console.log(message)
-// })
 
-
-controller.on('user_channel_join', Ladder.players.add);
+// register user
+controller.on('user_channel_join', Ladder.players.add.one);
+controller.hears('sudo add player <@(\\S+)>', ['direct_message'], Ladder.players.add.manual);

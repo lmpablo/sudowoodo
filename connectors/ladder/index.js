@@ -1,5 +1,9 @@
 var utils = require('./utils.js');
 var uuid = require('node-uuid');
+var responsesjs = require('../../responses.js')
+
+var Responses = responsesjs.responses
+var randomResponse = responsesjs.randomResponse
 
 module.exports = {
   players: {
@@ -16,29 +20,41 @@ module.exports = {
         bot.reply(message, reason);
       });
     },
-    add: function(bot, message) {
-      bot.api.channels.info({channel: message.channel}, function(err, response) {
-        if(response.channel.name === "pingpong") {
-          bot.startPrivateConversation({user: message.user}, function(response, convo) {
-            convo.say("Hey <@" + message.user +">! I noticed you joined <#" + message.channel +  ">...");
-            convo.say("I'm gonna add you to the database. Sit tight!")
+    add: {
+      one: function(bot, message) {
+        bot.api.channels.info({channel: message.channel}, function(err, response) {
+          if(response.channel.name === "pingpong") {
+            bot.startPrivateConversation({user: message.user}, function(response, convo) {
+              convo.say("Hey <@" + message.user +">! I noticed you joined <#" + message.channel +  ">...");
+              convo.say("I'm gonna add you to the database. Sit tight!")
 
-            var user_data = { player_id: message.user }
+              var user_data = { player_id: message.user }
 
-            utils.request.POST('/players', user_data, function(status, reason, data) {
-              if (status === "success") {
-                convo.say("Sweet, it worked!")
-              }
-            }, function(status, reason, data) {
-              if (reason === "Player already exists") {
-                convo.say("Oops. Looks like you were already registered!");
-              } else {
-                convo.say("Oops. Something went wrong: " + reason);
-              }
-            })
-          });
-        }
-      });
+              utils.request.POST('/players', user_data, function(status, reason, data) {
+                if (status === "success") {
+                  convo.say("Sweet, it worked!")
+                }
+              }, function(status, reason, data) {
+                if (reason === "Player already exists") {
+                  convo.say("Oops. Looks like you were already registered!");
+                } else {
+                  convo.say("Oops. Something went wrong: " + reason);
+                }
+              })
+            });
+          }
+        });
+      },
+      manual: function(bot, message) {
+        var player = message.match[1];
+        var user_data = { player_id: player }
+
+        utils.request.POST('/players', user_data, function(status, reason, data) {
+          bot.reply(message, 'SUCCESS: Player <@' + player + '> added.')
+        }, function(status, reason, data) {
+          bot.reply(message, 'ERROR: Add failed \n>' + reason);
+        })
+      }
     }
   },
   matches: {
@@ -170,9 +186,9 @@ module.exports = {
 
         if (rank) {
           if (rank === 1) {
-            bot.reply(message, "YOU'RE NUMBER ONE!!")
+            bot.reply(message, randomResponse(Responses.congratulations.strong) + " YOU'RE NUMBER ONE!!")
           } else if (rank < 5 && rank > 1) {
-            bot.reply(message, "Pretty good! You're currently ranked #" + rank + "!")
+            bot.reply(message, randomResponse(Responses.congratulations.neutral) + " You're currently ranked #" + rank + "!")
           } else {
             bot.reply(message, "You're currently #" + rank + "!")
           }
