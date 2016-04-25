@@ -1,6 +1,7 @@
 var Botkit = require('botkit');
 var Ladder = require('./connectors/ladder/index.js');
 var responsesjs = require('./responses.js')
+var utils = require('./ladder/utils.js');
 
 var Responses = responsesjs.responses
 var randomResponse = responsesjs.randomResponse
@@ -18,7 +19,11 @@ var greetingCount = 0;
 
 
 function processSlackPayload(payload) {
-
+  var users = payload.users
+  for (var i = 0, len = users.length; i < len; i++) {
+    var user = users[i];
+    // do stuff
+  }
 }
 
 function aboutBot(message) {
@@ -63,6 +68,7 @@ controller.hears("(?:who|what)(?: is| 's)(?: a)?", ['mention', 'direct_mention']
 // debug commands
 controller.hears('sudo (?:get|list)(?: all)? players', ['direct_message'], Ladder.players.getAll);
 controller.hears('sudo (?:get|list)(?: all)? matches', ['direct_message'], Ladder.matches.getAll);
+controller.hears('sudo (?:force )?recalculate ratings', ['direct_message'], Ladder.ratings.recalculate);
 
 // Get all rankings
 controller.hears(['list(?:.*) ranking(?:s)?', 'ranking(?:s)? list'],

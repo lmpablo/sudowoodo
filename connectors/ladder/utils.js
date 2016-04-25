@@ -54,5 +54,19 @@ module.exports.request = {
       if (!error && response.statusCode == 200) { callback(s, r, d); }
       else { errorCallback(s, r, d); }
     });
+  },
+  PUT: function(endpoint, data, callback, errorCallback) {
+    request({
+      method: 'put',
+      url: endpoint,
+      body: data,
+      json: true
+    }, function (error, response, body) {
+      var d = body.data,
+        r = body.reason,
+        s = body.status;
+      if (!error && response.statusCode == 200) { callback(s, r, d); }
+      else { errorCallback(s, r, d); }
+    });
   }
 }

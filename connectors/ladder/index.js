@@ -25,22 +25,33 @@ module.exports = {
         bot.api.channels.info({channel: message.channel}, function(err, response) {
           if(response.channel.name === "pingpong") {
             bot.startPrivateConversation({user: message.user}, function(response, convo) {
-              convo.say("Hey <@" + message.user +">! I noticed you joined <#" + message.channel +  ">...");
-              convo.say("I'm gonna add you to the database. Sit tight!")
+              convo.say("Hey <@" + message.user +">! Welcome to <#" + message.channel +  ">...");
 
-              var user_data = { player_id: message.user }
+              utils.request.GET('/players/' + message.user, function(status, reason, data) {
+                  convo.say("Looks like you're already registered!")
+              }, function(status, reason) {
+                  convo.say("I'm gonna add you to the database. Sit tight!")
+                  bot.api.users.info({ user: message.user }, function(err, response) {
+                    var user_data = {
+                      player_id: message.user,
+                      slack_name: response.user.name,
+                      real_name: response.user.profile.real_name,
+                      profile_picture: response.user.profile.image_512
+                    }
 
-              utils.request.POST('/players', user_data, function(status, reason, data) {
-                if (status === "success") {
-                  convo.say("Sweet, it worked!")
-                }
-              }, function(status, reason, data) {
-                if (reason === "Player already exists") {
-                  convo.say("Oops. Looks like you were already registered!");
-                } else {
-                  convo.say("Oops. Something went wrong: " + reason);
-                }
-              })
+                    utils.request.POST('/players', user_data, function(status, reason, data) {
+                      if (status === "success") {
+                        convo.say("Sweet, it worked!")
+                      }
+                    }, function(status, reason, data) {
+                      if (reason === "Player already exists") {
+                        convo.say("Oops. Looks like you were already registered?");
+                      } else {
+                        convo.say("Oops. Something went wrong: " + reason);
+                      }
+                    })
+                  });
+              });
             });
           }
         });
@@ -57,13 +68,22 @@ module.exports = {
       }
     }
   },
+  ratings: {
+    recalculate: function(bot, message) {
+      utils.request.PUT('/ratings', {}, function(status, reason, data) {
+        bot.reply(message, 'SUCCESS: ' + data)
+      }, function(status, reason, data) {
+        bot.reply(message, 'ERROR: ' + reason)
+      })
+    }
+  },
   matches: {
     getAll: function(bot, message) {
       bot.reply(message, "get all matches");
     },
     add: {
       one: function(bot, message) {
-        var winner, loser;
+        var winner, loser, score1, score2;
         var verb = message.match[2] || '';
         if (verb === 'beat' || verb === 'won against') {
           winner = message.match[1].toUpperCase();
@@ -86,76 +106,61 @@ module.exports = {
         if (message.match[4] && message.match[5]) {
           score1 = parseInt(message.match[4])
           score2 = parseInt(message.match[5])
-          winningScore = (score1 > score2) ? score1 : score2;
-          losingScore = (score1 > score2) ? score2 : score1;
-
-          bot.startConversation(message, function(err, convo){
-            var messageWithAttachments = {
-              'text': 'And that\'s a game!',
-              'attachments': [{
-                title: 'Match Results - ' + winner + ' vs. ' + loser,
-                fallback: 'Please confirm match results: %WINNER% (%SCORE_WIN%) - %LOSER% (%SCORE_LOSE%)'.replace("%WINNER%", winner).replace("%LOSER%", loser).replace("%SCORE_WIN%", winningScore).replace("%SCORE_LOSE%", losingScore),
-                fields: [{
-                  title: 'Winner',
-                  value: winner + ' (' + winningScore + ' points)',
-                  short: true
-                }, {
-                  title: 'Loser',
-                  value: loser + ' (' + losingScore + ' points)',
-                  short: true
-                }],
-                color: '#7CD197'
-              }]
-            }
-            convo.say(messageWithAttachments);
-            var res = "Hey <@%USER%>, do you mind just confirming this is correct?".replace("%USER%", message.user)
-            convo.ask(res, [{
-              pattern: bot.utterances.yes,
-              callback: function(res, convo) {
-                convo.say('Sweet! Congrats ' + winner + "!")
-
-                console.log(winner)
-                console.log(utils.parser.user(winner))
-                var matchData = {
-                  match_id: uuid.v4(),
-                  timestamp: new Date(),
-                  participants: [{
-                    player_id: utils.parser.user(winner),
-                    score: winningScore
-                  }, {
-                    player_id: utils.parser.user(loser),
-                    score: losingScore
-                  }],
-                  winner: utils.parser.user(winner)
-                }
-
-                console.log(matchData)
-
-                utils.request.POST('/matches', matchData, function(status, reason, data) {
-                  if (status === "success") {
-                    convo.say("Aaaaaaand...")
-                    convo.say("Done!")
-                  }
-                }, function(status, reason, data) {
-                  if (reason === "Match already exists") {
-                    convo.say("Oops. Looks like you already registered that match?");
-                  } else {
-                    convo.say("Oops. Something went wrong: " + reason);
-                  }
-                })
-                convo.next()
-              }
-            }, {
-              pattern: bot.utterances.no,
-              callback: function(res, convo) {
-                convo.say('O...kay? Do you wanna give me the right results then?')
-                convo.next();
-              }
-            }])
-          })
         } else {
-          bot.reply(message, "Sorry, do you mind repeating that, but add the scores as well? Thanks.")
+          score1 = 9
+          score2 = 11
         }
+
+        winningScore = (score1 > score2) ? score1 : score2;
+        losingScore = (score1 > score2) ? score2 : score1;
+
+        bot.startConversation(message, function(err, convo){
+          var matchData = {
+            match_id: uuid.v4(),
+            timestamp: new Date(),
+            participants: [{
+              player_id: utils.parser.user(winner),
+              score: winningScore
+            }, {
+              player_id: utils.parser.user(loser),
+              score: losingScore
+            }],
+            winner: utils.parser.user(winner)
+          }
+
+          console.log(matchData)
+          convo.say("Gotcha. Recording results now.")
+          convo.say("Aaaaaaand...")
+
+          utils.request.POST('/matches', matchData, function(status, reason, data) {
+            if (status === "success") {
+              var messageWithAttachments = {
+                'text': 'Congrats ' + winner + '!',
+                'attachments': [{
+                  title: 'Match Results - ' + winner + ' vs. ' + loser,
+                  fallback: 'Please confirm match results: %WINNER% (%SCORE_WIN%) - %LOSER% (%SCORE_LOSE%)'.replace("%WINNER%", winner).replace("%LOSER%", loser).replace("%SCORE_WIN%", winningScore).replace("%SCORE_LOSE%", losingScore),
+                  fields: [{
+                    title: 'Winner',
+                    value: winner + ' (' + winningScore + ' points)',
+                    short: true
+                  }, {
+                    title: 'Loser',
+                    value: loser + ' (' + losingScore + ' points)',
+                    short: true
+                  }],
+                  color: '#7CD197'
+                }]
+              }
+              convo.say(messageWithAttachments);
+            }
+          }, function(status, reason, data) {
+            if (reason === "Match already exists") {
+              convo.say("Oops. Looks like you already registered that match?");
+            } else {
+              convo.say("I couldn't add your match. Something went wrong: " + reason);
+            }
+          })
+        })
       }
     }
   },
@@ -190,10 +195,10 @@ module.exports = {
           } else if (rank < 5 && rank > 1) {
             bot.reply(message, randomResponse(Responses.congratulations.neutral) + " You're currently ranked #" + rank + "!")
           } else {
-            bot.reply(message, "You're currently #" + rank + "!")
+            bot.reply(message, "You're currently #" + rank + "! " + randomResponse(Responses.encouragement))
           }
         } else {
-          bot.reply(message, "You're currently listed as UNRANKED. Time to change that!");
+          bot.reply(message, "You're currently listed as UNRANKED. Time to change that! " + randomResponse(Responses.encouragement.strong));
         }
       }, function(error, response, body) {
         bot.reply(message, "Something bad happened, please let someone know: " + error.code)
