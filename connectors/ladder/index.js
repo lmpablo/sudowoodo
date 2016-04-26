@@ -29,6 +29,9 @@ module.exports = {
 
               utils.request.GET('/players/' + message.user, function(status, reason, data) {
                   convo.say("Looks like you're already registered!")
+                  convo.say("The leaderboard is on http://159.203.8.121:5000")
+                  convo.say("Your user profile is on http://159.203.8.121:5000/profile/" + message.user)
+                  convo.say("In the meantime, head on over to <#" + message.channel + ">!")
               }, function(status, reason) {
                   convo.say("I'm gonna add you to the database. Sit tight!")
                   bot.api.users.info({ user: message.user }, function(err, response) {
@@ -42,6 +45,9 @@ module.exports = {
                     utils.request.POST('/players', user_data, function(status, reason, data) {
                       if (status === "success") {
                         convo.say("Sweet, it worked!")
+                        convo.say("The leaderboard is on http://159.203.8.121:5000")
+                        convo.say("Your user profile is http://159.203.8.121:5000/profile/" + message.user)
+                        convo.say("In the meantime, head on over to <#pingpong>!")
                       }
                     }, function(status, reason, data) {
                       if (reason === "Player already exists") {

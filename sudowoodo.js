@@ -1,14 +1,14 @@
 var Botkit = require('botkit');
 var Ladder = require('./connectors/ladder/index.js');
 var responsesjs = require('./responses.js')
-var utils = require('./ladder/utils.js');
+var utils = require('./connectors/ladder/utils.js');
 
 var Responses = responsesjs.responses
 var randomResponse = responsesjs.randomResponse
 
 mongoStorage = require('botkit-storage-mongo')({mongoUri: 'mongodb://localhost:27017/'})
 var controller = Botkit.slackbot({
-  debug: false,
+  debug: true,
   storage: mongoStorage
   //include "log: false" to disable logging
   //or a "logLevel" integer from 0 to 7 to adjust logging verbosity
@@ -59,7 +59,7 @@ controller.hears('^(hello|hey|yo|hi|howdy|bonjour|hallo|hullo)( sudowoodo)?$',['
 });
 
 
-controller.hears("(?:who|what)(?: is| 's)(?: a)?", ['mention', 'direct_mention'], function(bot, message) {
+controller.hears("(?:who|what)(?: is|'s)(?: a)?(?: sudowoodo)?", ['mention', 'ambient'], function(bot, message) {
   bot.reply(message, aboutBot(message))
 });
 
