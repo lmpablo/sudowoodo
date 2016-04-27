@@ -49,7 +49,7 @@ controller.spawn({
   processSlackPayload(payload);
 })
 
-controller.hears('^(hello|hey|yo|hi|howdy|bonjour|hallo|hullo)( sudowoodo)?$',['direct_message','direct_mention','mention'],function(bot,message) {
+controller.hears('^(hello|hey|yo|hi|howdy|bonjour|hallo|hullo)( sudowoodo)?',['direct_message','direct_mention','mention'],function(bot,message) {
   greetingCount++;
   var responses;
   if (greetingCount < 5) { responses = Responses.salutation.neutral; }
