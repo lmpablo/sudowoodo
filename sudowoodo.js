@@ -111,6 +111,14 @@ controller.hears(":(\\S+):", ["direct_mention", "mention", "ambient"], function(
   bot.reply(message, maybeRespond([":" + message.match[1] + ":!!!"], 0.7))
 })
 
+controller.hears("\\?", ["direct_mention", "mention"], function(bot, message) {
+  bot.reply(message, randomResponse(["lol idk", ".....yes", "....yes maybe", "......no?", ".....maybe? idk"]))
+})
+
+controller.hears(["don't like you", "hate you", "do not like you"], ["direct_mention", "mention"], function(bot, message) {
+  bot.reply(message, ":(")
+})
+
 /* Ladder-related Triggers */
 // debug commands
 controller.hears('sudo (?:get|list)(?: all)? players', ['direct_message'], Ladder.players.getAll);
