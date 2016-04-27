@@ -1,4 +1,4 @@
-module.exports.randomResponse = function (responseSet) {
+var randomResponse = function (responseSet) {
   var finalSet = []
   if (Object.prototype.toString.call(responseSet) === '[object Array]') {
     finalSet = responseSet;
@@ -11,6 +11,12 @@ module.exports.randomResponse = function (responseSet) {
     }
   }
   return finalSet[Math.floor(Math.random() * finalSet.length)];
+}
+
+var maybeRespond = function (responseSet, thresholdYes) {
+  var threshold = thresholdYes || 0.5;
+  var rand = Math.random()
+  return rand > threshold ? randomResponse(responseSet) : '';
 }
 
 module.exports.responses = {
@@ -39,3 +45,6 @@ module.exports.responses = {
     annoyed: ['And you are?', 'Why are you talking to me?', 'Who gave you permission to -- ugh, nevermind.', 'What is it now?', 'OMG WHAT??']
   }
 }
+
+module.exports.randomResponse = randomResponse
+module.exports.maybeRespond = maybeRespond
