@@ -16,14 +16,16 @@ var controller = Botkit.slackbot({
 });
 
 var greetingCount = 0;
+var remainingAnnoyedResponses = [];
 var lastTopic = "pingpong"
 var explained = false
-
+var firstNames = {};
 
 function processSlackPayload(payload) {
   var users = payload.users
   for (var i = 0, len = users.length; i < len; i++) {
     var user = users[i];
+    firstNames[user.id] = user.profile.first_name || user.id;
     // do stuff
   }
 }
@@ -49,23 +51,32 @@ controller.spawn({
   processSlackPayload(payload);
 })
 
-controller.hears('^(hello|hey|yo|hi|howdy|bonjour|hallo|hullo)( sudowoodo)?',['direct_message','direct_mention','mention'],function(bot,message) {
-  greetingCount++;
-  var responses;
-  if (greetingCount < 5) { responses = Responses.salutation.neutral; }
-  else {
-    responses = Responses.salutation.annoyed;
-    if (greetingCount > 8) { greetingCount = 0; }
-  }
-  bot.reply(message, randomResponse(responses));
+controller.hears('^(hello|hey|yo$|hi|howdy|bonjour|hallo|hullo)( sudowoodo)?',
+  ['direct_message','direct_mention','mention'],
+  function(bot,message) {
+    greetingCount++;
+    var responses;
+
+    if (greetingCount < 5) {
+      responses = Responses.salutation.neutral;
+      remainingAnnoyedResponses = Responses.salutation.annoyed;
+    }
+    else {
+      responses = [remainingAnnoyedResponses.pop()];
+      if (greetingCount > 8) { greetingCount = 0; }
+    }
+    bot.reply(message, randomResponse(responses, firstNames[message.user]));
 });
 
+controller.hears(["thanks", "tyvm", "^ty", "thank you"], ['mention', 'direct_mention', 'direct_message'], function(bot, message) {
+  bot.reply(message, randomResponse(Responses.replyTo.thanks, firstNames[message.user]))
+})
 
 controller.hears("(?:who|what)(?: is|'s)(?: a)?(?: sudowoodo)?", ['mention', 'ambient'], function(bot, message) {
   bot.reply(message, aboutBot(message))
 });
 
-controller.hears("how.*calculat.*ra.*ng(s)?", ["ambient", "direct_mention", "mention"], function(bot, message) {
+controller.hears("how.*(calculat|comput).*ra.*ng(s)?", ["ambient", "direct_mention", "mention"], function(bot, message) {
   bot.startConversation(message, function(err, convo) {
     if (explained) {
       convo.say("I already explained it!! I DON'T WANT TO AGAIN.")
@@ -82,7 +93,7 @@ controller.hears("how.*calculat.*ra.*ng(s)?", ["ambient", "direct_mention", "men
             convo.say("Then, I take the absolute value of difference in your points, `point_diff`")
             convo.say("I calculate the margin of victory: `(ln(point_diff) + 1) * (2.2 / (rating_diff * 0.001 + 2.2))`")
             convo.say("Then I multiply that margin of victory to your k-factor -- just a value that affects how drastic a match affects your score")
-            convo.say("Then I multiply _all_ that the difference between your `score` and `exp_score`")
+            convo.say("Then I multiply _all_ that with the difference between your `score` and `exp_score`")
             convo.say("DONE.")
             convo.say(maybeRespond(["What a mouthful."]))
             convo.say("Oh, and then subtract or add that to your current rating.")
@@ -100,22 +111,34 @@ controller.hears("how.*calculat.*ra.*ng(s)?", ["ambient", "direct_mention", "men
   });
 })
 
-controller.hears("ping(?:-| )?pong", ["ambient", "direct_mention", "mention"], function(bot, message) {
+controller.hears(["ping(?:-| )?pong"], ["ambient", "direct_mention", "mention"], function(bot, message) {
+  console.log(message)
   bot.reply(message, maybeRespond(["PING-PONG IS LIFE :table_tennis_paddle_and_ball:",
   "PING-PONG ROOLZ",
   ":table_tennis_paddle_and_ball: = :100:",
-  "^ that message speaks to me"]));
+  "^ that message speaks to me",
+  "I'm better than ping pong than any of you.", "What is life without ping pong?"]));
 })
 
 controller.hears(":(\\S+):", ["direct_mention", "mention", "ambient"], function(bot, message) {
-  bot.reply(message, maybeRespond([":" + message.match[1] + ":!!!"], 0.7))
+  bot.reply(message, maybeRespond([":" + message.match[1] + ":", ":" + message.match[1] + ":!!"], 0.7))
 })
 
-controller.hears("\\?", ["direct_mention", "mention"], function(bot, message) {
-  bot.reply(message, randomResponse(["lol idk", ".....yes", "....yes maybe", "......no?", ".....maybe? idk"]))
+controller.hears(["\\?", '^what', '^why', '^where', '^how', '^who'], ["direct_mention", "mention"], function(bot, message) {
+  var respList = ["lol idk",
+    "...42. Whatever your question was, that's the answer.\nNo, it's 4.\nNope, it's definitely 42.",
+    "yes. maybe? I wasn't listening to your question",
+    "...:neutral_face:",
+    "idk",
+    "ERROR: idk how to answer your question lol :robot_face:",
+    "yes. the answer is yes.\nwait. I wasn't listening.",
+    "Well, you see, $USER$....",
+    "Lemme think about that for a sec and I'll get back to you ;)",
+    "Look, $USER$. I don't know what you want me to say."]
+  bot.reply(message, randomResponse(respList, firstNames[message.user]))
 })
 
-controller.hears(["don't like you", "hate you", "do not like you"], ["direct_mention", "mention"], function(bot, message) {
+controller.hears(["don't like you", "hate you", "do not like you", "f\\w+ you", "screw you"], ["direct_mention", "mention"], function(bot, message) {
   bot.reply(message, ":(")
 })
 
@@ -136,7 +159,7 @@ controller.hears(["(what(?:'s| is) )?my ranking", "personal ranking"],
   Ladder.rankings.personal);
 
 // match record
-controller.hears('(\\S+) (won against|beat|was beaten by) (\\S+)(?:.* (\\d+):(\\d+))?', ['direct_mention', 'direct_message'], Ladder.matches.add.one)
+controller.hears('(\\S+) (won against|beat|was beaten by) (\\S+)(?:.* (\\d+)[:|-](\\d+))?', ['direct_mention', 'direct_message'], Ladder.matches.add.one)
 
 // register user
 controller.on('user_channel_join', Ladder.players.add.one);

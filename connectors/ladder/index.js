@@ -4,6 +4,7 @@ var responsesjs = require('../../responses.js')
 
 var Responses = responsesjs.responses
 var randomResponse = responsesjs.randomResponse
+var maybeRespond = responsesjs.maybeRespond
 
 module.exports = {
   players: {
@@ -98,7 +99,7 @@ module.exports = {
           winner = message.match[3].toUpperCase();
           loser = message.match[1].toUpperCase();
         } else {
-          bot.reply("I'm not sure I understand what actually happened here.")
+          bot.reply(message, "I'm not sure I understand what actually happened here.")
           return
         }
 
@@ -135,16 +136,25 @@ module.exports = {
           }
 
           console.log(matchData)
-          convo.say("Gotcha. Recording results now.")
+          convo.say(randomResponse(Responses.confirmation, message.user) + " Recording results now.")
           convo.say("Aaaaaaand...")
 
           utils.request.POST('/matches', matchData, function(status, reason, data) {
             if (status === "success") {
+              var congratulationsText = "";
+              var pointDiff = winningScore - losingScore;
+              if (pointDiff > 3) {
+                congratulationsText = randomResponse(Responses.congratulations.neutral, message.user);
+              } else if (pointDiff > 6) {
+                congratulationsText = randomResponse(Responses.congratulations.strong, message.user) + winner;
+              } else {
+                congratulationsText = 'Congrats ' + winner + '!';
+              }
               var messageWithAttachments = {
-                'text': 'Congrats ' + winner + '!',
+                'text': congratulationsText,
                 'attachments': [{
                   title: 'Match Results - ' + winner + ' vs. ' + loser,
-                  fallback: 'Please confirm match results: %WINNER% (%SCORE_WIN%) - %LOSER% (%SCORE_LOSE%)'.replace("%WINNER%", winner).replace("%LOSER%", loser).replace("%SCORE_WIN%", winningScore).replace("%SCORE_LOSE%", losingScore),
+                  fallback: '%WINNER% (%SCORE_WIN%) - %LOSER% (%SCORE_LOSE%)'.replace("%WINNER%", winner).replace("%LOSER%", loser).replace("%SCORE_WIN%", winningScore).replace("%SCORE_LOSE%", losingScore),
                   fields: [{
                     title: 'Winner',
                     value: winner + ' (' + winningScore + ' points)',
@@ -158,6 +168,7 @@ module.exports = {
                 }]
               }
               convo.say(messageWithAttachments);
+              convo.say(maybeRespond(["I got next!! Haha jkjk."], 0.95))
             }
           }, function(status, reason, data) {
             if (reason === "Match already exists") {
@@ -201,7 +212,7 @@ module.exports = {
           } else if (rank < 5 && rank > 1) {
             bot.reply(message, randomResponse(Responses.congratulations.neutral) + " You're currently ranked #" + rank + "!")
           } else {
-            bot.reply(message, "You're currently #" + rank + "! " + randomResponse(Responses.encouragement))
+            bot.reply(message, randomResponse(Responses.congratulations.weak, message.user) + " You're currently #" + rank + ". " + randomResponse(Responses.encouragement))
           }
         } else {
           bot.reply(message, "You're currently listed as UNRANKED. Time to change that! " + randomResponse(Responses.encouragement.strong));
