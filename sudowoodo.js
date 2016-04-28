@@ -68,6 +68,11 @@ controller.hears('^(hello|hey|yo$|hi|howdy|bonjour|hallo|hullo)( sudowoodo)?',
     bot.reply(message, randomResponse(responses, firstNames[message.user]));
 });
 
+controller.hears('^good (\\w+)( sudowoodo)?', ['direct_message', 'mention', 'direct_mention'],
+  function(bot, message) {
+    bot.reply(message, randomResponse(["Good " + message.match[1] + " to you too, $USER$"], firstNames[message.user]))
+})
+
 controller.hears(["thanks", "tyvm", "^ty", "thank you"], ['mention', 'direct_mention', 'direct_message'], function(bot, message) {
   bot.reply(message, randomResponse(Responses.replyTo.thanks, firstNames[message.user]))
 })
