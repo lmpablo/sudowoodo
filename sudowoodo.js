@@ -51,6 +51,29 @@ controller.spawn({
   processSlackPayload(payload);
 })
 
+/* Ladder-related Triggers */
+// debug commands
+controller.hears('sudo (?:get|list)(?: all)? players', ['direct_message'], Ladder.players.getAll);
+controller.hears('sudo (?:get|list)(?: all)? matches', ['direct_message'], Ladder.matches.getAll);
+controller.hears('sudo (?:force )?recalculate ratings', ['direct_message'], Ladder.ratings.recalculate);
+
+// Get all rankings
+controller.hears(['list(?:.*) ranking(?:s)?', 'ranking(?:s)? list', 'show(?:.*) leaderboard(?:s)?', 'show(?:.*) ranking(?:s)?'],
+  ['direct_mention', 'mention', 'direct_message'],
+  Ladder.rankings.getAll);
+
+// Get personal ranking
+controller.hears(["(what(?:'s| is) )?my ranking", "personal ranking"],
+  ['ambient', 'direct_message', 'direct_mention', 'message'],
+  Ladder.rankings.personal);
+
+// match record
+controller.hears('(\\S+) (won against|beat|was beaten by) (\\S+)(?:.* (\\d+)[:|-](\\d+))?', ['direct_mention', 'direct_message'], Ladder.matches.add.one)
+
+// register user
+controller.on('user_channel_join', Ladder.players.add.one);
+controller.hears('sudo add player <@(\\S+)>', ['direct_message'], Ladder.players.add.manual);
+
 controller.hears('^(hello|hey|yo$|hi|howdy|bonjour|hallo|hullo)( sudowoodo)?',
   ['direct_message','direct_mention','mention'],
   function(bot,message) {
@@ -126,7 +149,16 @@ controller.hears(["ping(?:-| )?pong"], ["ambient", "direct_mention", "mention"],
 })
 
 controller.hears(":(\\S+):", ["direct_mention", "mention", "ambient"], function(bot, message) {
-  bot.reply(message, maybeRespond([":" + message.match[1] + ":", ":" + message.match[1] + ":!!"], 0.7))
+  bot.reply(message, maybeRespond([":" + message.match[1] + ":", ":" + message.match[1] + ":!!"], 0.85))
+})
+
+controller.hears("^who", ["direct_mention", "mention"], function(bot, message) {
+  var responses = ["You, $USER$!",
+    "I guess it's you, $USER$",
+    "It's not always about you, $USER$",
+    "Not sure who that is"
+  ]
+  bot.reply(message, randomResponse(responses));
 })
 
 controller.hears(["\\?", '^what', '^why', '^where', '^how', '^who'], ["direct_mention", "mention"], function(bot, message) {
@@ -139,33 +171,11 @@ controller.hears(["\\?", '^what', '^why', '^where', '^how', '^who'], ["direct_me
     "yes. the answer is yes.\nwait. I wasn't listening.",
     "Well, you see, $USER$....",
     "Lemme think about that for a sec and I'll get back to you ;)",
-    "Look, $USER$. I don't know what you want me to say."]
+    "Look, $USER$. I don't know what you want me to say.",
+    "I don't know the answer to that yet. But when I do, I'll let you know."]
   bot.reply(message, randomResponse(respList, firstNames[message.user]))
 })
 
 controller.hears(["don't like you", "hate you", "do not like you", "f\\w+ you", "screw you"], ["direct_mention", "mention"], function(bot, message) {
   bot.reply(message, ":(")
 })
-
-/* Ladder-related Triggers */
-// debug commands
-controller.hears('sudo (?:get|list)(?: all)? players', ['direct_message'], Ladder.players.getAll);
-controller.hears('sudo (?:get|list)(?: all)? matches', ['direct_message'], Ladder.matches.getAll);
-controller.hears('sudo (?:force )?recalculate ratings', ['direct_message'], Ladder.ratings.recalculate);
-
-// Get all rankings
-controller.hears(['list(?:.*) ranking(?:s)?', 'ranking(?:s)? list'],
-  ['direct_mention', 'mention', 'direct_message'],
-  Ladder.rankings.getAll);
-
-// Get personal ranking
-controller.hears(["(what(?:'s| is) )?my ranking", "personal ranking"],
-  ['ambient', 'direct_message', 'direct_mention', 'message'],
-  Ladder.rankings.personal);
-
-// match record
-controller.hears('(\\S+) (won against|beat|was beaten by) (\\S+)(?:.* (\\d+)[:|-](\\d+))?', ['direct_mention', 'direct_message'], Ladder.matches.add.one)
-
-// register user
-controller.on('user_channel_join', Ladder.players.add.one);
-controller.hears('sudo add player <@(\\S+)>', ['direct_message'], Ladder.players.add.manual);
