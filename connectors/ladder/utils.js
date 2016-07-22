@@ -1,4 +1,4 @@
-var request = require('request').defaults({'baseUrl': 'http://localhost:5000/api/v1'});
+var request = require('request').defaults({'baseUrl': 'http://localhost:5000/api/v2'});
 
 module.exports.parser = {
   user: function(userString) {
