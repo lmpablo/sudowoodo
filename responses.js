@@ -31,7 +31,7 @@ module.exports.responses = {
     neutral: ['Nope.', 'Nah.', 'No.', 'Uh-uh.'],
     weak: ['No...?', 'I guess not...', 'I don\'t think so...']
   },
-  confirmation: ['Yep. Got it.', 'Got it!', 'Ahh. Gotcha.', 'Gotcha.', 'Alright!'],
+  confirmation: ['Yep. Got it.', 'Got it!', 'Ahh. Gotcha.', 'Gotcha.', 'Alright!', 'I see.'],
   hesitation: ['Maybe.', 'Probably.', 'Probably?', 'Perhaps...', 'I guess so?', 'I guess that\'s possible'],
   congratulations: {
     strong: ['NICE!', 'WOOHOO!', 'SWEET!', 'VERY. NICE.', 'VERY NICE!', 'GOOD JOB!', 'ALRIGHT!', 'GODDAMN.'],

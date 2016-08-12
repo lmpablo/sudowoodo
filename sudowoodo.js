@@ -2,6 +2,7 @@ var Botkit = require('botkit');
 var Ladder = require('./connectors/ladder/index.js');
 var responsesjs = require('./responses.js')
 var utils = require('./connectors/ladder/utils.js');
+var Router = require('./receivers/router.js')
 
 var Responses = responsesjs.responses
 var randomResponse = responsesjs.randomResponse
@@ -148,34 +149,4 @@ controller.hears(["ping(?:-| )?pong"], ["ambient", "direct_mention", "mention"],
   "I'm better than ping pong than any of you.", "What is life without ping pong?"]));
 })
 
-controller.hears(":(\\S+):", ["direct_mention", "mention", "ambient"], function(bot, message) {
-  bot.reply(message, maybeRespond([":" + message.match[1] + ":", ":" + message.match[1] + ":!!"], 0.85))
-})
-
-controller.hears("^who", ["direct_mention", "mention"], function(bot, message) {
-  var responses = ["You, $USER$!",
-    "I guess it's you, $USER$",
-    "It's not always about you, $USER$",
-    "Not sure who that is"
-  ]
-  bot.reply(message, randomResponse(responses));
-})
-
-controller.hears(["\\?", '^what', '^why', '^where', '^how', '^who'], ["direct_mention", "mention"], function(bot, message) {
-  var respList = ["lol idk",
-    "...42. Whatever your question was, that's the answer.\nNo, it's 4.\nNope, it's definitely 42.",
-    "yes. maybe? I wasn't listening to your question",
-    "...:neutral_face:",
-    "idk",
-    "ERROR: idk how to answer your question lol :robot_face:",
-    "yes. the answer is yes.\nwait. I wasn't listening.",
-    "Well, you see, $USER$....",
-    "Lemme think about that for a sec and I'll get back to you ;)",
-    "Look, $USER$. I don't know what you want me to say.",
-    "I don't know the answer to that yet. But when I do, I'll let you know."]
-  bot.reply(message, randomResponse(respList, firstNames[message.user]))
-})
-
-controller.hears(["don't like you", "hate you", "do not like you", "f\\w+ you", "screw you"], ["direct_mention", "mention"], function(bot, message) {
-  bot.reply(message, ":(")
-})
+Router(controller);
