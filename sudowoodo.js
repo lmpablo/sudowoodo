@@ -2,6 +2,7 @@ var Botkit = require('botkit');
 var Ladder = require('./connectors/ladder/index.js');
 var responsesjs = require('./responses.js')
 var utils = require('./connectors/ladder/utils.js');
+var Router = require('./router.js')
 
 var Responses = responsesjs.responses
 var randomResponse = responsesjs.randomResponse
@@ -179,3 +180,5 @@ controller.hears(["\\?", '^what', '^why', '^where', '^how', '^who'], ["direct_me
 controller.hears(["don't like you", "hate you", "do not like you", "f\\w+ you", "screw you"], ["direct_mention", "mention"], function(bot, message) {
   bot.reply(message, ":(")
 })
+
+Router(controller)

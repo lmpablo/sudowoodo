@@ -137,7 +137,6 @@ module.exports = {
 
           console.log(matchData)
           convo.say(randomResponse(Responses.confirmation, message.user) + " Recording results now.")
-          convo.say("Aaaaaaand...")
 
           utils.request.POST('/matches', matchData, function(status, reason, data) {
             if (status === "success") {
@@ -168,7 +167,7 @@ module.exports = {
                 }]
               }
               convo.say(messageWithAttachments);
-              convo.say(maybeRespond(["I got next!! Haha jkjk."], 0.95))
+              convo.say(maybeRespond(["I got next!! Haha jkjk.", "I could probably do better than that", "Who's next?"], 0.95))
             }
           }, function(status, reason, data) {
             if (reason === "Match already exists") {
