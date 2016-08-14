@@ -2,9 +2,19 @@ var randomInt = function(length){
     return Math.floor(Math.random() * length);
 };
 
-var ResponseBuilder = function() {};
+var response = function(message, varMap) {
+    var messageCopy = message;
+    // TODO: check for replacement sources and targets; If there are sources, but no targets, replace them with blanks
+    for (var source in varMap) {
+        if (varMap.hasOwnProperty(source)){
+            messageCopy = messageCopy.replace(source, varMap[source]);
+        }
+    }
 
-ResponseBuilder.prototype.randomResponse = function(responseSet, varMap){
+    return messageCopy;
+};
+
+var randomResponse = function(responseSet, varMap){
     var finalSet = [];
     if (Object.prototype.toString.call(responseSet) === '[object Array]') {
         finalSet = responseSet;
@@ -17,21 +27,21 @@ ResponseBuilder.prototype.randomResponse = function(responseSet, varMap){
         }
     }
 
-    var withReplacements = finalSet[randomInt(finalSet.length)];
-    // TODO: check for replacement sources and targets; If there are sources, but no targets, replace them with blanks
-    for (var source in varMap) {
-        withReplacements = withReplacements.replace(source, varMap[source]);
-    }
-    return withReplacements;
+    var finalResponse = finalSet[randomInt(finalSet.length)];
+    return this.response(finalResponse, varMap);
 };
 
-ResponseBuilder.prototype.maybeRespond = function(responseSet, varMap, _t) {
-    var threshold = 0.5;
+var maybeRespond = function(responseSet, varMap, _t) {
+    var threshold = 0.5 * 100;
     if (typeof _t !== 'undefined') {
-        threshold = _t;
+        threshold = _t * 100;
     }
-    var rand = Math.random();
+    var rand = randomInt(101);
     return rand >= threshold ? this.randomResponse(responseSet, varMap) : '';
 };
 
-module.exports = ResponseBuilder;
+module.exports = {
+    response: response,
+    randomResponse: randomResponse,
+    maybeRespond: maybeRespond
+};
