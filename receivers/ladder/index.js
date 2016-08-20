@@ -133,6 +133,8 @@ function buildRankingField(rankInfo, isUser, diffFromFirst) {
         field.color = SILVER;
     } else if (rankInfo.rank === 3) {
         field.color = BRONZE;
+    } else {
+        field.color = "#FFFFFF"
     }
 
     if (isUser) {
