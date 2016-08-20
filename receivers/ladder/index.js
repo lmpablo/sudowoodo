@@ -125,7 +125,7 @@ function buildRankingField(rankInfo, isUser, diffFromFirst) {
     var field = {
         'fallback': rb.response('$RANK$ - $USER$', replacements),
         'title': rb.response('$RANK$ - $USER$ $DIFF$', replacements),
-        'title_link': 'http://localhost:5000/profile/' + rankInfo.player_id
+        'title_link': 'http://159.203.8.121:5000/profile/' + rankInfo.player_id
     };
     if (rankInfo.rank === 1) {
         field.color = GOLD;
