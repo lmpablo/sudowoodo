@@ -1,11 +1,7 @@
 var Botkit = require('botkit');
-var Ladder = require('./connectors/ladder/index.js');
 var responsesjs = require('./responses.js')
-var utils = require('./connectors/ladder/utils.js');
-var Router = require('./router.js')
+var Router = require('./receivers/router.js')
 
-var Responses = responsesjs.responses
-var randomResponse = responsesjs.randomResponse
 var maybeRespond = responsesjs.maybeRespond
 
 mongoStorage = require('botkit-storage-mongo')({mongoUri: 'mongodb://localhost:27017/'})
@@ -16,94 +12,29 @@ var controller = Botkit.slackbot({
   //or a "logLevel" integer from 0 to 7 to adjust logging verbosity
 });
 
-var greetingCount = 0;
-var remainingAnnoyedResponses = [];
 var lastTopic = "pingpong"
 var explained = false
-var firstNames = {};
 
 function processSlackPayload(payload) {
-  var users = payload.users
+  var firstNames = {};
+  var users = payload.users;
   for (var i = 0, len = users.length; i < len; i++) {
     var user = users[i];
-    firstNames[user.id] = user.profile.first_name || user.id;
-    // do stuff
+    firstNames[user.id] = user.profile.first_name || '<@' + user.id + '>';
   }
+  return firstNames;
 }
-
-function aboutBot(message) {
-  var response = [
-    "I'm but a bot.",
-    "One of you. But cooler.",
-    "What did you just call me, <@" + message.user + ">?",
-    "You rang?",
-    "I think I heard someone say my name",
-    "I don't go around asking what _you_ are, <@" + message.user + ">, so..."
-  ]
-
-  return response[Math.floor(Math.random() * response.length)];
-}
-
 
 // connect the bot to a stream of messages
 controller.spawn({
-  token: process.env.token,
+  token: process.env.token
 }).startRTM(function(err, bot, payload) {
-  processSlackPayload(payload);
-})
-
-/* Ladder-related Triggers */
-// debug commands
-controller.hears('sudo (?:get|list)(?: all)? players', ['direct_message'], Ladder.players.getAll);
-controller.hears('sudo (?:get|list)(?: all)? matches', ['direct_message'], Ladder.matches.getAll);
-controller.hears('sudo (?:force )?recalculate ratings', ['direct_message'], Ladder.ratings.recalculate);
-
-// Get all rankings
-controller.hears(['list(?:.*) ranking(?:s)?', 'ranking(?:s)? list', 'show(?:.*) leaderboard(?:s)?', 'show(?:.*) ranking(?:s)?'],
-  ['direct_mention', 'mention', 'direct_message'],
-  Ladder.rankings.getAll);
-
-// Get personal ranking
-controller.hears(["(what(?:'s| is) )?my ranking", "personal ranking"],
-  ['ambient', 'direct_message', 'direct_mention', 'message'],
-  Ladder.rankings.personal);
-
-// match record
-controller.hears('(\\S+) (won against|beat|was beaten by) (\\S+)(?:.* (\\d+)[:|-](\\d+))?', ['direct_mention', 'direct_message'], Ladder.matches.add.one)
-
-// register user
-controller.on('user_channel_join', Ladder.players.add.one);
-controller.hears('sudo add player <@(\\S+)>', ['direct_message'], Ladder.players.add.manual);
-
-controller.hears('^(hello|hey|yo$|hi|howdy|bonjour|hallo|hullo)( sudowoodo)?',
-  ['direct_message','direct_mention','mention'],
-  function(bot,message) {
-    greetingCount++;
-    var responses;
-
-    if (greetingCount < 5) {
-      responses = Responses.salutation.neutral;
-      remainingAnnoyedResponses = Responses.salutation.annoyed;
-    }
-    else {
-      responses = [remainingAnnoyedResponses.pop()];
-      if (greetingCount > 8) { greetingCount = 0; }
-    }
-    bot.reply(message, randomResponse(responses, firstNames[message.user]));
+  bot.realNames = processSlackPayload(payload);
+  bot.getRealName = function(uid) {
+    return bot.realNames[uid];
+  };
 });
 
-controller.hears('^good (\\w+)( sudowoodo)?', ['direct_message', 'mention', 'direct_mention'],
-  function(bot, message) {
-    bot.reply(message, randomResponse(["Good " + message.match[1] + " to you too, $USER$"], firstNames[message.user]))
-})
-
-controller.hears(["thanks", "tyvm", "^ty", "thank you"], ['mention', 'direct_mention', 'direct_message'], function(bot, message) {
-  bot.reply(message, randomResponse(Responses.replyTo.thanks, firstNames[message.user]))
-})
-
-controller.hears("(?:who|what)(?: is|'s)(?: a)?(?: sudowoodo)?", ['mention', 'ambient'], function(bot, message) {
-  bot.reply(message, aboutBot(message))
-});
 
 controller.hears("how.*(calculat|comput).*ra.*ng(s)?", ["ambient", "direct_mention", "mention"], function(bot, message) {
   bot.startConversation(message, function(err, convo) {
@@ -140,45 +71,4 @@ controller.hears("how.*(calculat|comput).*ra.*ng(s)?", ["ambient", "direct_menti
   });
 })
 
-controller.hears(["ping(?:-| )?pong"], ["ambient", "direct_mention", "mention"], function(bot, message) {
-  console.log(message)
-  bot.reply(message, maybeRespond(["PING-PONG IS LIFE :table_tennis_paddle_and_ball:",
-  "PING-PONG ROOLZ",
-  ":table_tennis_paddle_and_ball: = :100:",
-  "^ that message speaks to me",
-  "I'm better than ping pong than any of you.", "What is life without ping pong?"]));
-})
-
-controller.hears(":(\\S+):", ["direct_mention", "mention", "ambient"], function(bot, message) {
-  bot.reply(message, maybeRespond([":" + message.match[1] + ":", ":" + message.match[1] + ":!!"], 0.85))
-})
-
-controller.hears("^who", ["direct_mention", "mention"], function(bot, message) {
-  var responses = ["You, $USER$!",
-    "I guess it's you, $USER$",
-    "It's not always about you, $USER$",
-    "Not sure who that is"
-  ]
-  bot.reply(message, randomResponse(responses));
-})
-
-controller.hears(["\\?", '^what', '^why', '^where', '^how', '^who'], ["direct_mention", "mention"], function(bot, message) {
-  var respList = ["lol idk",
-    "...42. Whatever your question was, that's the answer.\nNo, it's 4.\nNope, it's definitely 42.",
-    "yes. maybe? I wasn't listening to your question",
-    "...:neutral_face:",
-    "idk",
-    "ERROR: idk how to answer your question lol :robot_face:",
-    "yes. the answer is yes.\nwait. I wasn't listening.",
-    "Well, you see, $USER$....",
-    "Lemme think about that for a sec and I'll get back to you ;)",
-    "Look, $USER$. I don't know what you want me to say.",
-    "I don't know the answer to that yet. But when I do, I'll let you know."]
-  bot.reply(message, randomResponse(respList, firstNames[message.user]))
-})
-
-controller.hears(["don't like you", "hate you", "do not like you", "f\\w+ you", "screw you"], ["direct_mention", "mention"], function(bot, message) {
-  bot.reply(message, ":(")
-})
-
-Router(controller)
+Router(controller);
