@@ -3,6 +3,7 @@ var Ladder = require('./ladder/index.js');
 var LadderAPI = require('./ladder/api.js');
 var Responses = require('./responses.js');
 var rb = require('./response_builder.js');
+var sentiment = require('sentiment');
 
 // message type shortcuts
 var AB = 'ambient',
@@ -17,6 +18,20 @@ module.exports = function(sudowoodo) {
      * Special functions
      */
     sudowoodo.middleware.receive.use(function(bot, message, next) {
+        var senRes = sentiment(message.text);
+        if (senRes.score <= -3) {
+            bot.api.reactions.add({
+                timestamp: message.ts,
+                name: 'disappointed',
+                channel: message.channel
+            });
+        } else if (senRes.score >= 3) {
+            bot.api.reactions.add({
+                timestamp: message.ts,
+                name: 'grin',
+                channel: message.channel
+            });
+        }
         bot.api.channels.info({channel: message.channel}, function(err, response) {
             if(!err) {
                 message.channelName = response.channel.name;
@@ -25,9 +40,9 @@ module.exports = function(sudowoodo) {
         });
     });
     sudowoodo.hears('sudo health check', [DM, AB], General.healthCheck);
-    sudowoodo.hears('health check', [DN, AT], General.healthCheck);
+    sudowoodo.hears('health check', [DN, AT, DM], General.healthCheck);
     sudowoodo.hears('sudo help', [AB, DM], General.help);
-    sudowoodo.hears('^help', [AT, DN], General.help);
+    sudowoodo.hears('^help', [AT, DN, DM], General.help);
 
     /**
      * General functions
@@ -67,17 +82,17 @@ module.exports = function(sudowoodo) {
     sudowoodo.hears('sudo ' + recalculatePattern,
         [DM, AB], Ladder.recalculateRatings);
     sudowoodo.hears(recalculatePattern,
-        [DN, AT], Ladder.recalculateRatings);
+        [DN, AT, DM], Ladder.recalculateRatings);
 
     sudowoodo.hears('sudo ' + matchRecordPattern,
         [DM, AB], Ladder.addMatch);
     sudowoodo.hears(matchRecordPattern,
-        [DN, AT], Ladder.addMatch);
+        [DN, AT, DM], Ladder.addMatch);
 
     sudowoodo.hears('sudo (list|show) (rankings|rankings|leaderboard)',
         [DM, AB], Ladder.getRankings);
     sudowoodo.hears('(list|show) (rankings|rankings|leaderboard)',
-        [DN, AT], Ladder.getRankings);
+        [DN, AT, DM], Ladder.getRankings);
 
     sudowoodo.hears([':table_tennis_paddle_and_ball:.*\\?', 'game.*?'],
         [AB], Ladder.matchAsk);

@@ -4,11 +4,12 @@
   "description": "A slackbot",
   "main": "sudowoodo.js",
   "dependencies": {
+    "botkit": "0.2.2",
     "botkit-storage-mongo": "^1.0.3",
     "mongodb": "^1.4.40",
     "node-uuid": "^1.4.7",
     "request": "^2.70.0",
-    "botkit": "0.2.2"
+    "sentiment": "^2.0.0"
   },
   "devDependencies": {},
   "scripts": {
