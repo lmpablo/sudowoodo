@@ -106,6 +106,10 @@ module.exports = function(sudowoodo) {
         [AB, DM, DN, AT], function(bot, message) {
             bot.reply(message, rb.randomResponse(Responses.disagree.neutral))
         });
+    sudowoodo.hears('sudo echo ["|\'|“]?(.*)["|”]?\\b',
+        [DM, AB, AT], function(bot, message) {
+            bot.reply(message, message.match[1]);
+        });
     sudowoodo.hears('^sudo (.*)',
         [DM, AB, DN, AT], function(bot, message){
             var response = 'Unknown command `' + message.match[1] +
