@@ -285,7 +285,7 @@ var addMatchHandler = function(bot, message) {
         bot.reply(message, ':x: Sorry, you can\'t do that here.');
         return;
     }
-    var outcome = parseMatchOutcomes(message.match);
+    var outcome = parseMatchOutcomes(message.match, message.user);
     if (!outcome.winner && !outcome.loser) {
         bot.reply(message, "Uhhh...I actually have no idea what you're talking about. I'm _stumped_.");
     } else {
