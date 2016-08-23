@@ -19,13 +19,13 @@ module.exports = function(sudowoodo) {
      */
     sudowoodo.middleware.receive.use(function(bot, message, next) {
         var senRes = sentiment(message.text);
-        if (senRes.score <= -3) {
+        if (senRes.score <= -5) {
             bot.api.reactions.add({
                 timestamp: message.ts,
                 name: 'disappointed',
                 channel: message.channel
             });
-        } else if (senRes.score >= 3) {
+        } else if (senRes.score > 5) {
             bot.api.reactions.add({
                 timestamp: message.ts,
                 name: 'grin',
