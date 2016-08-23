@@ -63,6 +63,11 @@ module.exports = function(sudowoodo) {
         [DN, AT, DM], General.meanMessage);
     sudowoodo.hears(['ping pong', 'pingpong', 'ping-pong', 'roti'],
         [AB, AT, DN], General.favouriteTopic);
+    sudowoodo.hears(['meaning of life'],
+        [AT, DN, DM], function(bot, message) {
+            bot.reply(message, rb.randomResponse(['pingpong', '42',
+                rb.maybeRespond(['Does everything need to have a meaning?'], {}, 0.95)]));
+    });
 
     /**
      * Ladder-specific functions
@@ -97,6 +102,10 @@ module.exports = function(sudowoodo) {
     sudowoodo.hears([':table_tennis_paddle_and_ball:.*\\?', 'game.*?'],
         [AB], Ladder.matchAsk);
 
+    sudowoodo.hears('^sudo make me a (\\S+)',
+        [AB, DM, DN, AT], function(bot, message) {
+            bot.reply(message, rb.randomResponse(Responses.disagree.neutral))
+        });
     sudowoodo.hears('^sudo (.*)',
         [DM, AB, DN, AT], function(bot, message){
             var response = 'Unknown command `' + message.match[1] +
