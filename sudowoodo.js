@@ -1,6 +1,7 @@
 var Botkit = require('botkit');
 var responsesjs = require('./responses.js')
 var Router = require('./receivers/router.js')
+var config = require('./config.js');
 
 var maybeRespond = responsesjs.maybeRespond
 
@@ -29,10 +30,12 @@ function processSlackPayload(payload) {
 controller.spawn({
   token: process.env.token
 }).startRTM(function(err, bot, payload) {
-  bot.realNames = processSlackPayload(payload);
-  bot.getRealName = function(uid) {
-    return bot.realNames[uid];
-  };
+    var environment = process.env.environment || 'dev';
+    bot.apiConfig = config[environment];
+    bot.realNames = processSlackPayload(payload);
+    bot.getRealName = function(uid) {
+        return bot.realNames[uid];
+    };
 });
 
 

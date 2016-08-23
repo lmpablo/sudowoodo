@@ -113,7 +113,7 @@ function addMatchResultRemarkGen(winner, loser, scoreDiff) {
     }
 }
 
-function buildRankingField(rankInfo, isUser, diffFromFirst) {
+function buildRankingField(rankInfo, isUser, diffFromFirst, config) {
     var GOLD = '#FFD700',
         SILVER = '#C9C0BB',
         BRONZE = '#A57164';
@@ -125,7 +125,7 @@ function buildRankingField(rankInfo, isUser, diffFromFirst) {
     var field = {
         'fallback': rb.response('$RANK$ - $USER$', replacements),
         'title': rb.response('$RANK$ - $USER$ $DIFF$', replacements),
-        'title_link': 'http://159.203.8.121:5000/profile/' + rankInfo.player_id
+        'title_link': config.frontend + '/profile/' + rankInfo.player_id
     };
     if (rankInfo.rank === 1) {
         field.color = GOLD;
@@ -191,10 +191,10 @@ var getRankings = function(bot, message) {
                 var isPlayer = rank.player_id === message.user;
                 if (joke) {
                     rank.slack_name = 'sudowoodo :tada:';
-                    msg.attachments.push(buildRankingField(rank, isPlayer, rank.rating - topRating));
+                    msg.attachments.push(buildRankingField(rank, isPlayer, rank.rating - topRating, bot.apiConfig));
                     break;
                 }
-                msg.attachments.push(buildRankingField(rank, isPlayer, rank.rating - topRating));
+                msg.attachments.push(buildRankingField(rank, isPlayer, rank.rating - topRating, bot.apiConfig));
             }
             bot.reply(message, msg);
         } else {
@@ -239,8 +239,8 @@ var addPlayerChannelJoin = function(bot, message) {
             LadderAPI.players.getOne(message.user, function(success, reason, data) {
                 if (success) {
                     convo.say("Looks like you're already registered!");
-                    convo.say("The leaderboard is on http://159.203.8.121:5000");
-                    convo.say("Your user profile is on http://159.203.8.121:5000/profile/" + message.user);
+                    convo.say("The leaderboard is on " + bot.apiConfig.frontend);
+                    convo.say("Your user profile is on " + bot.apiConfig.frontend + "/profile/" + message.user);
                     convo.say("In the meantime, head on over to <#" + message.channel + ">!");
                 } else {
                     convo.say("I'm gonna add you to the database. Sit tight!");
@@ -256,8 +256,8 @@ var addPlayerChannelJoin = function(bot, message) {
                             LadderAPI.players.addOne(user_data, function(success, reason) {
                                 if (success) {
                                     convo.say("Sweet, it worked!");
-                                    convo.say("The leaderboard is on http://159.203.8.121:5000");
-                                    convo.say("Your user profile is http://159.203.8.121:5000/profile/" + message.user);
+                                    convo.say("The leaderboard is on " + bot.apiConfig.frontend);
+                                    convo.say("Your user profile is on  " + bot.apiConfig.frontend + "/profile/" + message.user);
                                     convo.say("In the meantime, head on over to <#pingpong>!");
                                 } else {
                                     if (reason === 'player_already_exists') {
