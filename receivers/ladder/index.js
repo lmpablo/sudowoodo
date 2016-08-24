@@ -144,6 +144,33 @@ function buildRankingField(rankInfo, isUser, diffFromFirst, config) {
     return field;
 }
 
+function generateMatchCandidate(matchUps) {
+    var today = new Date();
+    var matchUpScores = matchUps.map(function(m) {
+        var lastGame = new Date(m.last_played_against);
+        var daysSince = (today - lastGame) / (60 * 60 * 24 * 1000);
+
+        var winRecord = m.games_won_against / m.games_played_against;
+
+        return {
+            score: (m.games_played_against * (Math.min(daysSince, 21) / 21)) + (100 * winRecord) ,
+            player_id: m.opp_id
+        }
+    });
+
+    var sortedCandidates = matchUpScores.sort(function(a, b) {
+        return b.score - a.score
+    });
+
+    var topCandidate = sortedCandidates[0];
+    for (var i = 0, len = matchUps.length; i < len; i++) {
+        if (topCandidate.player_id === matchUps[i].opp_id) {
+            return matchUps[i];
+        }
+    }
+    return {};
+}
+
 var getAllPlayersHandler = function(bot, message){
     LadderAPI.players.getAll(function(success, reason, players){
         if (success){
@@ -337,25 +364,79 @@ var recalculateRatings = function(bot, message) {
     })
 };
 
+function generateMatchReason(candidate, userName, opponentName) {
+    var days = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'];
+    var today = new Date();
+    var todayDayOfWeek = today.getDate();
+    var lastPlayed = new Date(candidate.last_played_against);
+    var daysSinceLastPlayed = (today - lastPlayed) / (60 * 60 * 24 * 1000);
+
+    var criteria = [(function() {
+        if (todayDayOfWeek === lastPlayed.getDay()) {
+            var dayOfWeek = days[todayDayOfWeek];
+            return 'because today is a ' + dayOfWeek + ' and the last time you both played was also a ' + dayOfWeek + '?';
+        } else {
+            return false;
+        }
+    })(), (function(){
+        var dow = days[todayDayOfWeek];
+        if (dow === 'Wednesday') {
+            return 'because today is a...' + days + '? :/'
+        } else {
+            return false;
+        }
+    })(), (function(){
+        if (daysSinceLastPlayed > 7) {
+            return 'because it\'s been more than a week since you last played, you know.'
+        } else {
+            return false;
+        }
+    })(), (function(){
+        if (daysSinceLastPlayed % 5 == 0) {
+            return 'because the number of days since you last played is a multiple of 5? idk.'
+        } else {
+            return false;
+        }
+    })(), (function(){
+        if (opponentName.indexOf('@') === -1 && opponentName[0].toLowerCase() === userName[0].toLowerCase()) {
+            return 'because your names both start with "' + opponentName[0].toUpperCase() + '"';
+        } else {
+            return false;
+        }
+    })(), (function(){
+        if (candidate.games_won_against > candidate.games_lost_against) {
+            return 'because you\'ve won against them more times than you\'ve lost!'
+        } else {
+            return false;
+        }
+    })(), 'ummm...because why not :)'];
+
+    return rb.randomResponse(criteria.filter(function(c){ return c; }))
+}
+
 var matchAskHandler = function(bot, message) {
     LadderAPI.stats.getPlayerStats(message.user, function(success, reason, data) {
         if (success) {
             var matchUps = data.match_ups;
             if (matchUps.length > 0) {
-                var randomInt = randInt(matchUps.length);
-                var candidate = matchUps[randomInt];
-                var proposal = rb.randomResponse([
-                    'May I suggest, $USER$?',
-                    'Why not $USER$? You have a $PERCENT$% chance to win..',
-                    'How about $USER$? You guys haven\'t played since $LAST$',
-                    'Hmm, what about $USER$? You\'ve won $NUM$ games against them!'
+                var candidate = generateMatchCandidate(matchUps);
+                var candidateProposal = rb.randomResponse([
+                    'Whaaaaat about $USER$, ',
+                    'I volunteer $USER$! :D especially ',
+                    '_Pssst_ I bet $USER$ is down for it, ',
+                    'I voluntell $USER$...',
+                    '$USER$, perhaps ',
+                    '$USER$ ... ',
+                    'I think I heard $USER$ said they could easily beat you ',
+                    '$USER$ is dying for a rematch ',
+                    '$USER$ said they could beat you with their eyes closed. I think. And '
                 ], {
-                    '$USER$': bot.getRealName(candidate.opp_id),
-                    '$PERCENT$': Number(candidate.pr_win_against * 100).toFixed(0),
-                    '$NUM$': candidate.games_won_against,
-                    '$LAST$': (new Date(candidate.last_played_against)).toDateString()
+                    '$USER$': bot.getRealName(candidate.opp_id)
                 });
-                bot.reply(message, proposal)
+                var candidateReason = generateMatchReason(candidate,
+                    bot.getRealName(message.user),
+                    bot.getRealName(candidate.opp_id));
+                bot.reply(message, candidateProposal + candidateReason);
             } else {
                 bot.reply(message, 'Okay. :raised_hand:')
             }

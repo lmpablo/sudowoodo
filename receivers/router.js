@@ -100,7 +100,7 @@ module.exports = function(sudowoodo) {
         [DN, AT, DM], Ladder.getRankings);
 
     sudowoodo.hears([':table_tennis_paddle_and_ball:.*\\?', 'game.*?'],
-        [AB], Ladder.matchAsk);
+        [AB, DM], Ladder.matchAsk);
 
     sudowoodo.hears('^sudo make me a (\\S+)',
         [AB, DM, DN, AT], function(bot, message) {
