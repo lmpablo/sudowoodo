@@ -404,12 +404,24 @@ function generateMatchReason(candidate, userName, opponentName) {
             return false;
         }
     })(), (function(){
+        if (opponentName.indexOf('@') === -1 && opponentName.length === userName.length) {
+            return 'because your names are both ' + opponentName.length + ' letters long? :/';
+        } else {
+            return false;
+        }
+    })(), (function(){
         if (candidate.games_won_against > candidate.games_lost_against) {
             return 'because you\'ve won against them more times than you\'ve lost!'
         } else {
             return false;
         }
-    })(), 'ummm...because why not :)'];
+    })(), (function(){
+        if (daysSinceLastPlayed % 2 == 0) {
+            return 'because it\s been an even number of days since you last played?';
+        } else {
+            return false;
+        }
+    })(), 'because...today ends with "day"?', 'ummm...because why not :)', 'because *I* said so.'];
 
     return rb.randomResponse(criteria.filter(function(c){ return c; }))
 }
